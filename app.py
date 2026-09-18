@@ -72,75 +72,74 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
   st.header("Shift Summary Submission Form")
 
+  sup_choice = st.selectbox("Supervisor Name", SUPERVISORS)
+  supervisor_name = sup_choice
+  if sup_choice == "Other (Type below)":
+    supervisor_name = st.text_input("Enter your full name")
+
+  st.divider()
+
+  st.subheader("Line of Business (LOB)")
+  lob = st.radio(
+      "Select which summary are you filling out",
+      ["KYC", "Customer Care"],
+      key="lob_selector",
+  )
+
+  st.divider()
+
   with st.form("shift_summary_form", clear_on_submit=True):
-    # Supervisor Identification
-    st.subheader("Supervisor Details")
-    sup_choice = st.selectbox("Supervisor Name", SUPERVISORS)
-    supervisor_name = sup_choice
-    if sup_choice == "Other (Type below)":
-      supervisor_name = st.text_input("Enter your full name")
-
-    st.divider()
-
-    # 1. LOB Selection
-    st.subheader("Line of Business (LOB)")
-    lob = st.radio(
-        "Select which summary are you filling out", ["KYC", "Customer Care"]
-    )
-
-    st.divider()
-
-    # 2. Hub Selection
     st.subheader("Hub Location")
     if lob == "KYC":
-      hub = st.selectbox("Hub", HUBS_KYC)
+      hub = st.selectbox("Hub", HUBS_KYC, key="hub_kyc")
     else:
-      hub = st.selectbox("Hub", HUBS_CC)
+      hub = st.selectbox("Hub", HUBS_CC, key="hub_cc")
 
     st.divider()
 
-    # 3. Daily Checklist
+    # 3. Daily Checklist (Actualizado)
     st.subheader("Daily Checklist")
     checklist_selected = []
 
     if lob == "KYC":
-      c1 = st.checkbox("Attendance")
-      c2 = st.checkbox("KYC Briefing")
-      c3 = st.checkbox("Unassign over 8 hour tickets")
-      c4 = st.checkbox("Marked all absentees on Shift Organizer")
-      c5 = st.checkbox("Handled KYC - Supervisor tickets")
+      c1 = st.checkbox("Attendance", key="c_kyc_1")
+      c2 = st.checkbox("KYC Briefing", key="c_kyc_2")
+      c3 = st.checkbox("Unassign over 8 hour tickets", key="c_kyc_3")
+      c4 = st.checkbox("Marked all absentees on Shift Organizer", key="c_kyc_4")
+      c5 = st.checkbox("Handled KYC - Supervisor tickets", key="c_kyc_5")
+
       for name, val in [
           ("Attendance", c1),
           ("KYC Briefing", c2),
-          ("Unassign tickets", c3),
-          ("Marked absentees on Organizer", c4),
+          ("Unassign over 8 hour tickets", c3),
+          ("Marked all absentees on Shift Organizer", c4),
           ("Handled KYC - Supervisor tickets", c5),
       ]:
         if val:
           checklist_selected.append(name)
     else:
-      c1 = st.checkbox("Attendance")
-      c2 = st.checkbox("Test the lines")
-      c3 = st.checkbox("CC Briefing")
-      c4 = st.checkbox("Sending IPH and SLA reports")
-      c5 = st.checkbox("Marked all absentees on Shift Organizer")
-      c6 = st.checkbox("G3 Checklist")
-      c7 = st.checkbox("Review of agent skills")
+      c1 = st.checkbox("Attendance", key="c_cc_1")
+      c2 = st.checkbox("Test the lines", key="c_cc_2")
+      c3 = st.checkbox("CC Briefing", key="c_cc_3")
+      c4 = st.checkbox("Sending IPH and SLA reports", key="c_cc_4")
+      c5 = st.checkbox("Marked all absentees on Shift Organizer", key="c_cc_5")
+      c6 = st.checkbox("G3 Checklist", key="c_cc_6")
+      c7 = st.checkbox("Review of agent skills", key="c_cc_7")
+
       for name, val in [
           ("Attendance", c1),
           ("Test the lines", c2),
           ("CC Briefing", c3),
           ("Sending IPH and SLA reports", c4),
-          ("Marked absentees on Organizer", c5),
+          ("Marked all absentees on Shift Organizer", c5),
           ("G3 Checklist", c6),
-          ("Review of agent skills", c7)
+          ("Review of agent skills", c7),
       ]:
         if val:
           checklist_selected.append(name)
 
     st.divider()
 
-    # Operational metrics and details (Points to note removed/unifed)
     st.subheader("Shift Metrics & Details")
 
     tech_issues = st.text_area(
@@ -155,7 +154,6 @@ with tab1:
     with col_b:
       actual_reps = st.number_input("Actual Reps", min_value=0, value=0, step=1)
 
-    # Simplified Absentees Section
     st.markdown("**Absentees Management**")
     absentees_names = st.text_input(
         "Names of the absentees (Type names separated by commas)",
@@ -177,7 +175,6 @@ with tab1:
 
     st.divider()
 
-    # Unified Handover & Points to Note field
     st.subheader("Handover & Points to Note")
     handover_text = st.text_area(
         "Shift Handover / Key Highlights / Important Notes",
