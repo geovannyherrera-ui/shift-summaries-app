@@ -97,7 +97,6 @@ with tab1:
 
     st.divider()
 
-    # 3. Daily Checklist (Actualizado)
     st.subheader("Daily Checklist")
     checklist_selected = []
 
@@ -131,7 +130,7 @@ with tab1:
           ("Test the lines", c2),
           ("CC Briefing", c3),
           ("Sending IPH and SLA reports", c4),
-          ("Marked all absentees on Shift Organizer", c5),
+          ("Marked absentees on Shift Organizer", c5),
           ("G3 Checklist", c6),
           ("Review of agent skills", c7),
       ]:
@@ -281,6 +280,7 @@ with tab3:
 
       for index, row in handovers_hoy.iterrows():
         with st.container(border=True):
+          # Fila 1: Datos Generales
           col_h1, col_h2, col_h3, col_h4 = st.columns(4)
           with col_h1:
             st.markdown(f"**LOB:** {row['LOB']}")
@@ -291,12 +291,43 @@ with tab3:
           with col_h4:
             st.markdown(f"**Time:** {row['Timestamp']}")
 
+          st.divider()
+
+          # Fila 2: Indicadores Rápidos (Asistencia y Tech Issues)
+          col_m1, col_m2 = st.columns(2)
+
+          with col_m1:
+            sched = int(row["Scheduled_Reps"])
+            actual = int(row["Actual_Reps"])
+            if sched > 0:
+              attendance_pct = (actual / sched) * 100
+              st.markdown(
+                  f"👥 **Attendance:** {actual}/{sched} reps"
+                  f" ({attendance_pct:.1f}%)"
+              )
+            else:
+              st.markdown(
+                  f"👥 **Attendance:** {actual}/{sched} reps (N/A)"
+              )
+
+          with col_m2:
+            tech_text = str(row["Tech_Issues"]).strip()
+            if tech_text and tech_text.lower() != "nan":
+              st.markdown("⚠️ **Tech Issues:** Yes")
+            else:
+              st.markdown("✅ **Tech Issues:** None")
+
+          # Handover Notes
           st.markdown(f"**Handover & Notes:**")
-          st.info(row["Handover"])
+          st.info(
+              row["Handover"]
+              if str(row["Handover"]).strip() != ""
+              else "No additional notes provided."
+          )
 
           with st.expander("View full shift details and checklist"):
             st.write(f"**Checklist Completed:** {row['Checklist_Items']}")
-            st.write(f"**Tech Issues:** {row['Tech_Issues']}")
+            st.write(f"**Tech Issues Details:** {row['Tech_Issues']}")
             st.write(
                 f"**Reps (Sched / Act):** {row['Scheduled_Reps']} /"
                 f" {row['Actual_Reps']}"
