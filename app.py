@@ -17,7 +17,15 @@ SUPERVISORS = [
     "Other (Type below)",
 ]
 
-HUBS_KYC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Romania", "India"]
+HUBS_KYC = [
+    "Guatemala",
+    "New York",
+    "Israel",
+    "Philippines",
+    "China",
+    "Romania",
+    "India",
+]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
 
 
@@ -42,6 +50,7 @@ def load_data():
             "Offline_Hours",
             "Offline_Reason",
             "Handover",
+            "DateOnly",
         ]
     )
 
@@ -216,7 +225,7 @@ with tab1:
             "Offline_Hours": offline_hours,
             "Offline_Reason": offline_reason,
             "Handover": handover_text,
-            "DateOnly": record_date,  # Extra helper column for strict day filtering
+            "DateOnly": record_date,
         }
         save_data(new_record)
         st.success(
@@ -231,7 +240,6 @@ with tab2:
   if df_historial.empty:
     st.info("No records available yet.")
   else:
-    # Filter search box
     search_query = st.text_input(
         "🔍 Search across all records (Supervisor, Hub, LOB, Text...)"
     )
@@ -243,7 +251,6 @@ with tab2:
 
     st.dataframe(df_historial, use_container_width=True)
 
-    # Download button for CSV backup
     csv_data = df_historial.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📥 Download Database as CSV",
@@ -262,11 +269,9 @@ with tab3:
   else:
     today_str = str(datetime.date.today())
 
-    # Safely filter for records matching today's date
     if "DateOnly" in df_today.columns:
       handovers_hoy = df_today[df_today["DateOnly"] == today_str]
     else:
-      # Fallback if old schema
       df_today["Timestamp_Date"] = pd.to_datetime(
           df_today["Timestamp"]
       ).dt.strftime("%Y-%m-%d")
@@ -275,7 +280,6 @@ with tab3:
     if handovers_hoy.empty:
       st.warning(
           f"No handovers have been registered for today yet ({today_str})."
-    )
       )
     else:
       st.success(
@@ -298,7 +302,6 @@ with tab3:
           st.markdown(f"**Handover Notes:**")
           st.info(row["Handover"])
 
-          # Expandable details for extra transparency
           with st.expander("View full shift details and checklist"):
             st.write(f"**Checklist Completed:** {row['Checklist_Items']}")
             st.write(f"**Points to Note:** {row['Points_To_Note']}")
