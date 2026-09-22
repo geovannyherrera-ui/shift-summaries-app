@@ -2,9 +2,12 @@ import datetime
 import os
 import pandas as pd
 import streamlit as st
+from supabase import create_client
 
-# CSV file acting as our database
-DB_FILE = "shift_data_v2.csv"
+# Conectar cliente con Secrets de Streamlit
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Remove the default placeholder from list since multiselect handles empty states naturally
 SUPERVISORS = [
@@ -43,13 +46,6 @@ HUBS_KYC = [
 ]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
 
-# --- CÓDIGO NUEVO (SUPABASE) ---
-from supabase import create_client
-
-# Conectar cliente con Secrets de Streamlit
-SUPABASE_URL = st.secrets["SUPABASE_URL"]
-SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def load_data():
     """Consulta todas las filas de la tabla 'shift_data' en Supabase."""
@@ -59,14 +55,29 @@ def load_data():
         if data:
             return pd.DataFrame(data)
         else:
-            return pd.DataFrame(columns=[
-                "Timestamp", "Supervisor", "LOB", "Hub", "Checklist_Items",
-                "Tech_Issues", "Scheduled_Reps", "Actual_Reps", "Absentees_Number",
-                "Absentees_Names", "Offline_Hours", "Offline_Reason", "Handover", "DateOnly"
-            ])
+            return pd.DataFrame(
+                columns=[
+                    "Timestamp",
+                    "Supervisor",
+                    "LOB",
+                    "Hub",
+                    "Checklist_Items",
+                    "Tech_Issues",
+                    "Bluebook",
+                    "Scheduled_Reps",
+                    "Actual_Reps",
+                    "Absentees_Number",
+                    "Absentees_Names",
+                    "Offline_Hours",
+                    "Offline_Reason",
+                    "Handover",
+                    "DateOnly",
+                ]
+            )
     except Exception as e:
         st.error(f"Error cargando datos de Supabase: {e}")
         return pd.DataFrame()
+
 
 def save_data(new_record):
     """Inserta un nuevo registro en la tabla 'shift_data' de Supabase."""
@@ -74,6 +85,7 @@ def save_data(new_record):
         supabase.table("shift_data").insert(new_record).execute()
     except Exception as e:
         st.error(f"Error guardando registro en Supabase: {e}")
+
 
 st.set_page_config(
     page_title="Shift Summaries & Handovers Hub", page_icon="📋", layout="wide"
@@ -131,7 +143,9 @@ with tab1:
             c1 = st.checkbox("Attendance", key="c_kyc_1")
             c2 = st.checkbox("KYC Briefing", key="c_kyc_2")
             c3 = st.checkbox("Unassign over 8 hour tickets", key="c_kyc_3")
-            c4 = st.checkbox("Marked all absentees on Shift Organizer", key="c_kyc_4")
+            c4 = st.checkbox(
+                "Marked all absentees on Shift Organizer", key="c_kyc_4"
+            )
             c5 = st.checkbox("Handled KYC - Supervisor tickets", key="c_kyc_5")
 
             for name, val in [
@@ -148,7 +162,9 @@ with tab1:
             c2 = st.checkbox("Test the lines", key="c_cc_2")
             c3 = st.checkbox("CC Briefing", key="c_cc_3")
             c4 = st.checkbox("Sending IPH and SLA reports", key="c_cc_4")
-            c5 = st.checkbox("Marked all absentees on Shift Organizer", key="c_cc_5")
+            c5 = st.checkbox(
+                "Marked all absentees on Shift Organizer", key="c_cc_5"
+            )
             c6 = st.checkbox("G3 Checklist", key="c_cc_6")
             c7 = st.checkbox("Review of agent skills", key="c_cc_7")
 
@@ -169,19 +185,24 @@ with tab1:
         st.subheader("Shift Metrics & Details")
 
         tech_issues = st.text_area(
-            "Tech Issues", placeholder="Describe any technical issues encountered..."
+            "Tech Issues",
+            placeholder="Describe any technical issues encountered...",
         )
 
-        # --- NUEVO: Pregunta sobre Bluebook ---
-is_bluebook = st.checkbox("🚨 Was a Bluebook / PagerDuty incident created?")
-        
+        # Pregunta sobre Bluebook integrada correctamente dentro del formulario
+        is_bluebook = st.checkbox(
+            "🚨 Was a Bluebook / PagerDuty incident created?"
+        )
+
         col_a, col_b = st.columns(2)
         with col_a:
             scheduled_reps = st.number_input(
                 "Scheduled Reps", min_value=0, value=0, step=1
             )
         with col_b:
-            actual_reps = st.number_input("Actual Reps", min_value=0, value=0, step=1)
+            actual_reps = st.number_input(
+                "Actual Reps", min_value=0, value=0, step=1
+            )
 
         st.markdown("**Absentees Management**")
         absentees_names = st.text_input(
@@ -208,8 +229,8 @@ is_bluebook = st.checkbox("🚨 Was a Bluebook / PagerDuty incident created?")
         handover_text = st.text_area(
             "Shift Handover / Key Highlights / Important Notes",
             placeholder=(
-                "Write the handover details, key highlights, and things for the"
-                " incoming shift to note here..."
+                "Write the handover details, key highlights, and things for"
+                " the incoming shift to note here..."
             ),
             height=180,
         )
@@ -218,7 +239,9 @@ is_bluebook = st.checkbox("🚨 Was a Bluebook / PagerDuty incident created?")
 
         if submitted:
             # Consolidate supervisor selections
-            selected_sups = [s for s in sup_choices if s != "Other (Type below)"]
+            selected_sups = [
+                s for s in sup_choices if s != "Other (Type below)"
+            ]
             if other_sup.strip():
                 selected_sups.append(other_sup.strip())
 
@@ -234,29 +257,33 @@ is_bluebook = st.checkbox("🚨 Was a Bluebook / PagerDuty incident created?")
                     absentees_list_clean = "None"
                 else:
                     names_list = [
-                        n.strip() for n in absentees_names.split(",") if n.strip()
+                        n.strip()
+                        for n in absentees_names.split(",")
+                        if n.strip()
                     ]
                     absentees_num = len(names_list)
                     absentees_list_clean = ", ".join(names_list)
 
                 record_date = str(datetime.date.today())
                 new_record = {
-    "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    "Supervisor": supervisor_string,
-    "LOB": lob,
-    "Hub": hub,
-    "Checklist_Items": ", ".join(checklist_selected),
-    "Tech_Issues": tech_issues,
-    "Bluebook": "Yes" if is_bluebook else "No",  # <--- NUEVO CAMPO
-    "Scheduled_Reps": scheduled_reps,
-    "Actual_Reps": actual_reps,
-    "Absentees_Number": absentees_num,
-    "Absentees_Names": absentees_list_clean,
-    "Offline_Hours": offline_hours,
-    "Offline_Reason": offline_reason,
-    "Handover": handover_text,
-    "DateOnly": record_date,
-}
+                    "Timestamp": datetime.datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    ),
+                    "Supervisor": supervisor_string,
+                    "LOB": lob,
+                    "Hub": hub,
+                    "Checklist_Items": ", ".join(checklist_selected),
+                    "Tech_Issues": tech_issues,
+                    "Bluebook": "Yes" if is_bluebook else "No",
+                    "Scheduled_Reps": scheduled_reps,
+                    "Actual_Reps": actual_reps,
+                    "Absentees_Number": absentees_num,
+                    "Absentees_Names": absentees_list_clean,
+                    "Offline_Hours": offline_hours,
+                    "Offline_Reason": offline_reason,
+                    "Handover": handover_text,
+                    "DateOnly": record_date,
+                }
                 save_data(new_record)
                 st.success(
                     f"✅ Shift Summary successfully submitted! ({absentees_num}"
@@ -275,9 +302,15 @@ with tab2:
             "🔍 Search across all records (Supervisor, Hub, LOB, Text...)"
         )
         if search_query:
-            mask = df_historial.astype(str).apply(
-                lambda x: x.str.contains(search_query, case=False, na=False)
-            ).any(axis=1)
+            mask = (
+                df_historial.astype(str)
+                .apply(
+                    lambda x: x.str.contains(
+                        search_query, case=False, na=False
+                    )
+                )
+                .any(axis=1)
+            )
             df_historial = df_historial[mask]
 
         st.dataframe(df_historial, use_container_width=True)
@@ -302,7 +335,9 @@ with tab3:
             st.subheader("Add Important Note")
             new_note = st.text_area(
                 "Write note for everyone to see:",
-                placeholder="Type urgent announcements or critical notices here...",
+                placeholder=(
+                    "Type urgent announcements or critical notices here..."
+                ),
             )
             if st.button("Save Note", use_container_width=True):
                 if new_note.strip():
@@ -318,7 +353,9 @@ with tab3:
             with st.container():
                 st.warning(f"**NOTICE:** {note}")
                 # Remove button next to each notice
-                if st.button(f"❌ Dismiss Note #{idx + 1}", key=f"del_note_{idx}"):
+                if st.button(
+                    f"❌ Dismiss Note #{idx + 1}", key=f"del_note_{idx}"
+                ):
                     st.session_state["important_notes"].pop(idx)
                     st.rerun()
         st.divider()
@@ -354,22 +391,30 @@ with tab3:
                     # Fila 1: Datos Generales
                     col_h1, col_h2, col_h3, col_h4 = st.columns(4)
                     with col_h1:
-                        st.markdown(f"**LOB:** {row['LOB']}")
+                        st.markdown(f"**LOB:** {row.get('LOB', 'N/A')}")
                     with col_h2:
-                        st.markdown(f"**Hub:** {row['Hub']}")
+                        st.markdown(f"**Hub:** {row.get('Hub', 'N/A')}")
                     with col_h3:
-                        st.markdown(f"**Supervisor(s):** {row['Supervisor']}")
+                        st.markdown(
+                            f"**Supervisor(s):** {row.get('Supervisor', 'N/A')}"
+                        )
                     with col_h4:
-                        st.markdown(f"**Time:** {row['Timestamp']}")
+                        st.markdown(
+                            f"**Time:** {row.get('Timestamp', 'N/A')}"
+                        )
 
                     st.divider()
 
-                    # Fila 2: Indicadores Rápidos (Asistencia y Tech Issues)
+                    # Fila 2: Indicadores Rápidos (Asistencia y Tech Issues / Bluebook)
                     col_m1, col_m2 = st.columns(2)
 
                     with col_m1:
-                        sched = int(row["Scheduled_Reps"])
-                        actual = int(row["Actual_Reps"])
+                        try:
+                            sched = int(row.get("Scheduled_Reps", 0))
+                            actual = int(row.get("Actual_Reps", 0))
+                        except (ValueError, TypeError):
+                            sched, actual = 0, 0
+
                         if sched > 0:
                             attendance_pct = (actual / sched) * 100
                             st.markdown(
@@ -378,38 +423,64 @@ with tab3:
                             )
                         else:
                             st.markdown(
-                                f"👥 **Attendance:** {actual}/{sched} reps (N/A)"
+                                f"👥 **Attendance:** {actual}/{sched} reps"
+                                " (N/A)"
                             )
 
                     with col_m2:
-                        tech_text = str(row["Tech_Issues"]).strip()
+                        tech_text = str(row.get("Tech_Issues", "")).strip()
+                        bluebook_status = str(row.get("Bluebook", "No")).strip()
+
                         if tech_text and tech_text.lower() != "nan":
-                            st.markdown("⚠️ **Tech Issues:** Yes")
+                            if bluebook_status == "Yes":
+                                st.markdown(
+                                    "🚨 **Tech Issues:** Yes (Bluebook /"
+                                    " PagerDuty)"
+                                )
+                            else:
+                                st.markdown("⚠️ **Tech Issues:** Yes")
                         else:
-                            st.markdown("✅ **Tech Issues:** None")
+                            if bluebook_status == "Yes":
+                                st.markdown(
+                                    "🚨 **Bluebook / PagerDuty:** Yes"
+                                )
+                            else:
+                                st.markdown("✅ **Tech Issues:** None")
 
                     # Handover Notes
                     st.markdown("**Handover & Notes:**")
+                    handover_val = str(row.get("Handover", "")).strip()
                     st.info(
-                        row["Handover"]
-                        if str(row["Handover"]).strip() != ""
+                        handover_val
+                        if handover_val != "" and handover_val.lower() != "nan"
                         else "No additional notes provided."
                     )
 
                     with st.expander("View full shift details and checklist"):
                         st.write(
-                            f"**Checklist Completed:** {row['Checklist_Items']}"
-                        )
-                        st.write(f"**Tech Issues Details:** {row['Tech_Issues']}")
-                        st.write(
-                            f"**Reps (Sched / Act):** {row['Scheduled_Reps']} /"
-                            f" {row['Actual_Reps']}"
+                            "**Checklist Completed:**"
+                            f" {row.get('Checklist_Items', 'N/A')}"
                         )
                         st.write(
-                            f"**Absentees Total:** {row['Absentees_Number']} (Names:"
-                            f" {row['Absentees_Names']})"
+                            "**Tech Issues Details:**"
+                            f" {row.get('Tech_Issues', 'None')}"
                         )
                         st.write(
-                            f"**Offline Time:** {row['Offline_Hours']} hrs (Reason:"
-                            f" {row['Offline_Reason']})"
+                            "**Bluebook Incident:**"
+                            f" {row.get('Bluebook', 'No')}"
+                        )
+                        st.write(
+                            "**Reps (Sched / Act):**"
+                            f" {row.get('Scheduled_Reps', 0)} /"
+                            f" {row.get('Actual_Reps', 0)}"
+                        )
+                        st.write(
+                            "**Absentees Total:**"
+                            f" {row.get('Absentees_Number', 0)} (Names:"
+                            f" {row.get('Absentees_Names', 'None')})"
+                        )
+                        st.write(
+                            "**Offline Time:**"
+                            f" {row.get('Offline_Hours', 0)} hrs (Reason:"
+                            f" {row.get('Offline_Reason', 'N/A')})"
                         )
