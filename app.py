@@ -172,6 +172,9 @@ with tab1:
             "Tech Issues", placeholder="Describe any technical issues encountered..."
         )
 
+        # --- NUEVO: Pregunta sobre Bluebook ---
+is_bluebook = st.checkbox("🚨 Was a Bluebook / PagerDuty incident created?")
+        
         col_a, col_b = st.columns(2)
         with col_a:
             scheduled_reps = st.number_input(
@@ -238,23 +241,22 @@ with tab1:
 
                 record_date = str(datetime.date.today())
                 new_record = {
-                    "Timestamp": datetime.datetime.now().strftime(
-                        "%Y-%m-%d %H:%M:%S"
-                    ),
-                    "Supervisor": supervisor_string,
-                    "LOB": lob,
-                    "Hub": hub,
-                    "Checklist_Items": ", ".join(checklist_selected),
-                    "Tech_Issues": tech_issues,
-                    "Scheduled_Reps": scheduled_reps,
-                    "Actual_Reps": actual_reps,
-                    "Absentees_Number": absentees_num,
-                    "Absentees_Names": absentees_list_clean,
-                    "Offline_Hours": offline_hours,
-                    "Offline_Reason": offline_reason,
-                    "Handover": handover_text,
-                    "DateOnly": record_date,
-                }
+    "Timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "Supervisor": supervisor_string,
+    "LOB": lob,
+    "Hub": hub,
+    "Checklist_Items": ", ".join(checklist_selected),
+    "Tech_Issues": tech_issues,
+    "Bluebook": "Yes" if is_bluebook else "No",  # <--- NUEVO CAMPO
+    "Scheduled_Reps": scheduled_reps,
+    "Actual_Reps": actual_reps,
+    "Absentees_Number": absentees_num,
+    "Absentees_Names": absentees_list_clean,
+    "Offline_Hours": offline_hours,
+    "Offline_Reason": offline_reason,
+    "Handover": handover_text,
+    "DateOnly": record_date,
+}
                 save_data(new_record)
                 st.success(
                     f"✅ Shift Summary successfully submitted! ({absentees_num}"
