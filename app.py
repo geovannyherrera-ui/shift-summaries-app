@@ -43,36 +43,37 @@ HUBS_KYC = [
 ]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
 
+# --- CÓDIGO NUEVO (SUPABASE) ---
+from supabase import create_client
+
+# Conectar cliente con Secrets de Streamlit
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def load_data():
-    if os.path.exists(DB_FILE):
-        return pd.read_csv(DB_FILE)
-    else:
-        return pd.DataFrame(
-            columns=[
-                "Timestamp",
-                "Supervisor",
-                "LOB",
-                "Hub",
-                "Checklist_Items",
-                "Tech_Issues",
-                "Scheduled_Reps",
-                "Actual_Reps",
-                "Absentees_Number",
-                "Absentees_Names",
-                "Offline_Hours",
-                "Offline_Reason",
-                "Handover",
-                "DateOnly",
-            ]
-        )
-
+    """Consulta todas las filas de la tabla 'shift_data' en Supabase."""
+    try:
+        response = supabase.table("shift_data").select("*").execute()
+        data = response.data
+        if data:
+            return pd.DataFrame(data)
+        else:
+            return pd.DataFrame(columns=[
+                "Timestamp", "Supervisor", "LOB", "Hub", "Checklist_Items",
+                "Tech_Issues", "Scheduled_Reps", "Actual_Reps", "Absentees_Number",
+                "Absentees_Names", "Offline_Hours", "Offline_Reason", "Handover", "DateOnly"
+            ])
+    except Exception as e:
+        st.error(f"Error cargando datos de Supabase: {e}")
+        return pd.DataFrame()
 
 def save_data(new_record):
-    df = load_data()
-    df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
-    df.to_csv(DB_FILE, index=False)
-
+    """Inserta un nuevo registro en la tabla 'shift_data' de Supabase."""
+    try:
+        supabase.table("shift_data").insert(new_record).execute()
+    except Exception as e:
+        st.error(f"Error guardando registro en Supabase: {e}")
 
 st.set_page_config(
     page_title="Shift Summaries & Handovers Hub", page_icon="📋", layout="wide"
