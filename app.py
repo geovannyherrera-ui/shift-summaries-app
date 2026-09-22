@@ -9,7 +9,7 @@ SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Remove the default placeholder from list since multiselect handles empty states naturally
+# Lista de supervisores
 SUPERVISORS = [
     "Elena Zbar",
     "David Mazzantini",
@@ -189,7 +189,6 @@ with tab1:
             placeholder="Describe any technical issues encountered...",
         )
 
-        # Pregunta sobre Bluebook integrada correctamente dentro del formulario
         is_bluebook = st.checkbox(
             "🚨 Was a Bluebook / PagerDuty incident created?"
         )
@@ -252,8 +251,10 @@ with tab1:
             elif handover_text.strip() == "":
                 st.error("The Handover / Points to Note field is mandatory.")
             else:
+                # Resta matemática para ausencias reales
+                calculated_absentees = max(0, int(scheduled_reps) - int(actual_reps))
+
                 if absentees_names.strip() == "":
-                    absentees_num = 0
                     absentees_list_clean = "None"
                 else:
                     names_list = [
@@ -261,7 +262,6 @@ with tab1:
                         for n in absentees_names.split(",")
                         if n.strip()
                     ]
-                    absentees_num = len(names_list)
                     absentees_list_clean = ", ".join(names_list)
 
                 record_date = str(datetime.date.today())
@@ -277,7 +277,7 @@ with tab1:
                     "Bluebook": "Yes" if is_bluebook else "No",
                     "Scheduled_Reps": scheduled_reps,
                     "Actual_Reps": actual_reps,
-                    "Absentees_Number": absentees_num,
+                    "Absentees_Number": calculated_absentees,
                     "Absentees_Names": absentees_list_clean,
                     "Offline_Hours": offline_hours,
                     "Offline_Reason": offline_reason,
@@ -286,7 +286,7 @@ with tab1:
                 }
                 save_data(new_record)
                 st.success(
-                    f"✅ Shift Summary successfully submitted! ({absentees_num}"
+                    f"✅ Shift Summary successfully submitted! ({calculated_absentees}"
                     " absentee(s) registered automatically)."
                 )
 
@@ -352,7 +352,6 @@ with tab3:
         for idx, note in enumerate(st.session_state["important_notes"]):
             with st.container():
                 st.warning(f"**NOTICE:** {note}")
-                # Remove button next to each notice
                 if st.button(
                     f"❌ Dismiss Note #{idx + 1}", key=f"del_note_{idx}"
                 ):
@@ -405,7 +404,7 @@ with tab3:
 
                     st.divider()
 
-                    # Fila 2: Indicadores Rápidos (Asistencia y Tech Issues / Bluebook)
+                    # Fila 2: Indicadores Rápidos
                     col_m1, col_m2 = st.columns(2)
 
                     with col_m1:
