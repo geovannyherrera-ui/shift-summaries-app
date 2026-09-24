@@ -46,6 +46,18 @@ HUBS_KYC = [
 ]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
 
+OFFLINE_REASONS = [
+    "None",
+    "Coaching",
+    "Team meetings",
+    "Training",
+    "1-on-1 Session",
+    "System / Tech Issues",
+    "All-Hands / Town Hall",
+    "Special Project / Administrative",
+    "Other (Specify in Handover)",
+]
+
 
 def load_data():
     """Consulta todas las filas de la tabla 'shift_data' en Supabase."""
@@ -203,12 +215,6 @@ with tab1:
                 "Actual Reps", min_value=0, value=0, step=1
             )
 
-        st.markdown("**Absentees Management**")
-        absentees_names = st.text_input(
-            "Names of the absentees (Type names separated by commas)",
-            placeholder="e.g., John Smith, Anna Davis",
-        )
-
         col_d, col_e = st.columns(2)
         with col_d:
             offline_hours = st.number_input(
@@ -218,8 +224,10 @@ with tab1:
                 step=0.5,
             )
         with col_e:
-            offline_reason = st.text_input(
-                "Reason for the offline time", placeholder="Brief description..."
+            offline_reason = st.selectbox(
+                "Reason for the offline time",
+                options=OFFLINE_REASONS,
+                index=0,
             )
 
         st.divider()
@@ -254,16 +262,6 @@ with tab1:
                 # Resta matemática para ausencias reales
                 calculated_absentees = max(0, int(scheduled_reps) - int(actual_reps))
 
-                if absentees_names.strip() == "":
-                    absentees_list_clean = "None"
-                else:
-                    names_list = [
-                        n.strip()
-                        for n in absentees_names.split(",")
-                        if n.strip()
-                    ]
-                    absentees_list_clean = ", ".join(names_list)
-
                 record_date = str(datetime.date.today())
                 new_record = {
                     "Timestamp": datetime.datetime.now().strftime(
@@ -278,7 +276,7 @@ with tab1:
                     "Scheduled_Reps": scheduled_reps,
                     "Actual_Reps": actual_reps,
                     "Absentees_Number": calculated_absentees,
-                    "Absentees_Names": absentees_list_clean,
+                    "Absentees_Names": "None",
                     "Offline_Hours": offline_hours,
                     "Offline_Reason": offline_reason,
                     "Handover": handover_text,
@@ -475,8 +473,7 @@ with tab3:
                         )
                         st.write(
                             "**Absentees Total:**"
-                            f" {row.get('Absentees_Number', 0)} (Names:"
-                            f" {row.get('Absentees_Names', 'None')})"
+                            f" {row.get('Absentees_Number', 0)}"
                         )
                         st.write(
                             "**Offline Time:**"
