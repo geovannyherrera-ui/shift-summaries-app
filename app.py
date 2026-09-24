@@ -47,15 +47,10 @@ HUBS_KYC = [
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
 
 OFFLINE_REASONS = [
-    "None",
+    "Select",
     "Coaching",
     "Team meetings",
     "Training",
-    "1-on-1 Session",
-    "System / Tech Issues",
-    "All-Hands / Town Hall",
-    "Special Project / Administrative",
-    "Other (Specify in Handover)",
 ]
 
 
