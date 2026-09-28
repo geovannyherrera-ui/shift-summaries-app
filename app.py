@@ -56,7 +56,7 @@ st.markdown(f"""
                 Shift Summaries <span class="payo-gradient-text">Hub</span>
             </h1>
             <p style="margin: 0; padding: 0; color: #666; font-size: 1.1rem; font-weight: 500;">
-                Operations & Handover Management
+                Shift Supervisor Management
             </p>
         </div>
     </div>
