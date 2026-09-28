@@ -4,56 +4,87 @@ import pandas as pd
 import streamlit as st
 from supabase import create_client
 
+# --- CONFIGURACIÓN DE LA PÁGINA ---
+# Usamos el logo oficial actualizado (el aro de colores)
+url_logo_nuevo = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Payoneer_logo.svg/512px-Payoneer_logo.svg.png"
+
+st.set_page_config(
+    page_title="Shift Summaries Hub", 
+    page_icon=url_logo_nuevo, 
+    layout="wide"
+)
+
+# --- ESTILOS VISUALES (PAYONEER BRANDING) ---
+st.markdown("""
+    <style>
+        /* Estilizar las pestañas */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 24px;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 50px;
+            white-space: pre-wrap;
+            background-color: transparent;
+            border-radius: 4px 4px 0 0;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            font-weight: 600;
+        }
+        /* Estilizar las tarjetas (containers) */
+        [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+            border: 1px solid #eef0f2;
+        }
+        
+        /* Clase especial para el texto con el degradado de Payoneer */
+        .payo-gradient-text {
+            background: linear-gradient(150deg, #ff4800 13.4%, #da54d8 50%, #0092f4 86.6%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- HEADER PERSONALIZADO ---
+st.markdown(f"""
+    <div style="display: flex; align-items: center; padding-bottom: 10px;">
+        <img src="{url_logo_nuevo}" width="55" style="margin-right: 15px;">
+        <div>
+            <h1 style="margin: 0; padding: 0; color: #1A1B25; font-size: 2.4rem;">
+                Shift Summaries <span class="payo-gradient-text">Hub</span>
+            </h1>
+            <p style="margin: 0; padding: 0; color: #666; font-size: 1.1rem; font-weight: 500;">
+                Operations & Handover Management
+            </p>
+        </div>
+    </div>
+    <div style="height: 4px; border-radius: 2px; background: linear-gradient(90deg, #ff4800 0%, #dfd902 20%, #20dc68 45%, #0092f4 70%, #da54d8 100%); margin-top: 15px; margin-bottom: 25px;"></div>
+""", unsafe_allow_html=True)
+
+# --- CONEXIÓN A SUPABASE ---
 # Conectar cliente con Secrets de Streamlit
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Lista de supervisores
+# --- VARIABLES Y CONSTANTES ---
 SUPERVISORS = [
-    "Elena Zbar",
-    "David Mazzantini",
-    "Huiyan Sun",
-    "Ari Chen",
-    "Garcia liu",
-    "Lynne Huang",
-    "Olha Dehtiar",
-    "Jonathan MENES",
-    "John Rafael BELLO",
-    "John Carl De Gracia",
-    "Nhel Flores",
-    "Martin Evans BANGIS",
-    "Robert III Flores",
-    "Hazel Ann Aguilar",
-    "Mark Anthony Desabayla",
-    "Darren Josh Suniga",
-    "Guardian Jasen",
-    "Geovanny Sebastian Herrera Claudio",
-    "Lizbeth Jazmin Chinchilla Colon",
-    "Elsy Nikol Garcia Martinez",
-    "Pavan A",
-    "Other (Type below)",
+    "Elena Zbar", "David Mazzantini", "Huiyan Sun", "Ari Chen", 
+    "Garcia liu", "Lynne Huang", "Olha Dehtiar", "Jonathan MENES", 
+    "John Rafael BELLO", "John Carl De Gracia", "Nhel Flores", 
+    "Martin Evans BANGIS", "Robert III Flores", "Hazel Ann Aguilar", 
+    "Mark Anthony Desabayla", "Darren Josh Suniga", "Guardian Jasen", 
+    "Geovanny Sebastian Herrera Claudio", "Lizbeth Jazmin Chinchilla Colon", 
+    "Elsy Nikol Garcia Martinez", "Pavan A", "Other (Type below)"
 ]
 
-HUBS_KYC = [
-    "Guatemala",
-    "New York",
-    "Israel",
-    "Philippines",
-    "China",
-    "Romania",
-    "India",
-]
+HUBS_KYC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Romania", "India"]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
+OFFLINE_REASONS = ["Select", "Coaching", "Team meetings", "Training"]
 
-OFFLINE_REASONS = [
-    "Select",
-    "Coaching",
-    "Team meetings",
-    "Training",
-]
-
-
+# --- FUNCIONES DE BASE DE DATOS ---
 def load_data():
     """Consulta todas las filas de la tabla 'shift_data' en Supabase."""
     try:
@@ -64,27 +95,15 @@ def load_data():
         else:
             return pd.DataFrame(
                 columns=[
-                    "Timestamp",
-                    "Supervisor",
-                    "LOB",
-                    "Hub",
-                    "Checklist_Items",
-                    "Tech_Issues",
-                    "Bluebook",
-                    "Scheduled_Reps",
-                    "Actual_Reps",
-                    "Absentees_Number",
-                    "Absentees_Names",
-                    "Offline_Hours",
-                    "Offline_Reason",
-                    "Handover",
-                    "DateOnly",
+                    "Timestamp", "Supervisor", "LOB", "Hub", "Checklist_Items", 
+                    "Tech_Issues", "Bluebook", "Scheduled_Reps", "Actual_Reps", 
+                    "Absentees_Number", "Absentees_Names", "Offline_Hours", 
+                    "Offline_Reason", "Handover", "DateOnly"
                 ]
             )
     except Exception as e:
         st.error(f"Error cargando datos de Supabase: {e}")
         return pd.DataFrame()
-
 
 def save_data(new_record):
     """Inserta un nuevo registro en la tabla 'shift_data' de Supabase."""
@@ -93,21 +112,11 @@ def save_data(new_record):
     except Exception as e:
         st.error(f"Error guardando registro en Supabase: {e}")
 
-
-url_logo = "https://companieslogo.com/img/orig/PAYO-cef43840.png?t=1720244493"
-
-st.set_page_config(
-    page_title="Shift Summaries Hub", 
-    page_icon=url_logo, 
-    layout="wide"
-)
-
-# Initialize Session State for Important Notes
+# --- INICIALIZAR SESSION STATE ---
 if "important_notes" not in st.session_state:
     st.session_state["important_notes"] = []
 
-st.title("Shift Summaries Hub")
-
+# --- TABS DE LA APLICACIÓN ---
 tab1, tab2, tab3 = st.tabs(
     ["➕ Submit Shift Summary", "📊 Historical Records", "🚨 Today's Handovers"]
 )
@@ -154,9 +163,7 @@ with tab1:
             c1 = st.checkbox("Attendance", key="c_kyc_1")
             c2 = st.checkbox("KYC Briefing", key="c_kyc_2")
             c3 = st.checkbox("Unassign over 8 hour tickets", key="c_kyc_3")
-            c4 = st.checkbox(
-                "Marked all absentees on Shift Organizer", key="c_kyc_4"
-            )
+            c4 = st.checkbox("Marked all absentees on Shift Organizer", key="c_kyc_4")
             c5 = st.checkbox("Handled KYC - Supervisor tickets", key="c_kyc_5")
 
             for name, val in [
@@ -173,9 +180,7 @@ with tab1:
             c2 = st.checkbox("Test the lines", key="c_cc_2")
             c3 = st.checkbox("CC Briefing", key="c_cc_3")
             c4 = st.checkbox("Sending IPH and SLA reports", key="c_cc_4")
-            c5 = st.checkbox(
-                "Marked all absentees on Shift Organizer", key="c_cc_5"
-            )
+            c5 = st.checkbox("Marked all absentees on Shift Organizer", key="c_cc_5")
             c6 = st.checkbox("G3 Checklist", key="c_cc_6")
             c7 = st.checkbox("Review of agent skills", key="c_cc_7")
 
