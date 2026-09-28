@@ -6,7 +6,7 @@ from supabase import create_client
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 # Usamos el logo oficial actualizado (el aro de colores)
-url_logo_nuevo = "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Payoneer_logo.svg/512px-Payoneer_logo.svg.png"
+url_logo_nuevo = "https://companieslogo.com/img/orig/PAYO-cef43840.png?t=1720244493"
 
 st.set_page_config(
     page_title="Shift Summaries Hub", 
