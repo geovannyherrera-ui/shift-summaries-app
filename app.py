@@ -94,8 +94,12 @@ def save_data(new_record):
         st.error(f"Error guardando registro en Supabase: {e}")
 
 
+url_logo = "https://companieslogo.com/img/orig/PAYO-cef43840.png?t=1720244493"
+
 st.set_page_config(
-    page_title="Shift Summaries & Handovers Hub", page_icon="📋", layout="wide"
+    page_title="Shift Summaries & Handovers Hub", 
+    page_icon=url_logo, 
+    layout="wide"
 )
 
 # Initialize Session State for Important Notes
