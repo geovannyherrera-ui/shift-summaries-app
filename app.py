@@ -97,7 +97,7 @@ def save_data(new_record):
 url_logo = "https://companieslogo.com/img/orig/PAYO-cef43840.png?t=1720244493"
 
 st.set_page_config(
-    page_title="Shift Summaries & Handovers Hub", 
+    page_title="Shift Summaries Hub", 
     page_icon=url_logo, 
     layout="wide"
 )
