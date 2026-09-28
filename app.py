@@ -102,7 +102,7 @@ st.set_page_config(
 if "important_notes" not in st.session_state:
     st.session_state["important_notes"] = []
 
-st.title("📋 Shift Summaries & Daily Handovers Hub")
+st.title("Shift Summaries Hub")
 
 tab1, tab2, tab3 = st.tabs(
     ["➕ Submit Shift Summary", "📊 Historical Records", "🚨 Today's Handovers"]
