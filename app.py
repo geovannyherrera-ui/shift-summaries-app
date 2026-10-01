@@ -5,7 +5,6 @@ import streamlit as st
 from supabase import create_client
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
-# Usamos el logo oficial actualizado (el aro de colores)
 url_logo_nuevo = "https://companieslogo.com/img/orig/PAYO-cef43840.png?t=1720244493"
 
 st.set_page_config(
@@ -64,7 +63,6 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- CONEXIÓN A SUPABASE ---
-# Conectar cliente con Secrets de Streamlit
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -82,11 +80,11 @@ SUPERVISORS = [
 
 HUBS_KYC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Romania", "India"]
 HUBS_CC = ["Guatemala", "New York", "Israel", "Philippines", "China", "Poland"]
-OFFLINE_REASONS = ["Select", "Coaching", "Team meetings", "Training"]
+# Quitamos "Select" para usar el multiselect correctamente
+OFFLINE_REASONS = ["Coaching", "Team meetings", "Training"]
 
 # --- FUNCIONES DE BASE DE DATOS ---
 def load_data():
-    """Consulta todas las filas de la tabla 'shift_data' en Supabase."""
     try:
         response = supabase.table("shift_data").select("*").execute()
         data = response.data
@@ -106,7 +104,6 @@ def load_data():
         return pd.DataFrame()
 
 def save_data(new_record):
-    """Inserta un nuevo registro en la tabla 'shift_data' de Supabase."""
     try:
         supabase.table("shift_data").insert(new_record).execute()
     except Exception as e:
@@ -125,7 +122,6 @@ tab1, tab2, tab3 = st.tabs(
 with tab1:
     st.header("Shift Summary Submission Form")
 
-    # Multi-select Supervisor Dropdown
     sup_choices = st.multiselect(
         "Supervisor Name(s)",
         SUPERVISORS,
@@ -228,10 +224,11 @@ with tab1:
                 step=0.5,
             )
         with col_e:
-            offline_reason = st.selectbox(
+            # --- CAMBIO A MULTISELECT AQUÍ ---
+            offline_reason = st.multiselect(
                 "Reason for the offline time",
                 options=OFFLINE_REASONS,
-                index=0,
+                placeholder="Select one or more reasons...",
             )
 
         st.divider()
@@ -249,7 +246,6 @@ with tab1:
         submitted = st.form_submit_button("Submit Shift Summary")
 
         if submitted:
-            # Consolidate supervisor selections
             selected_sups = [
                 s for s in sup_choices if s != "Other (Type below)"
             ]
@@ -257,13 +253,15 @@ with tab1:
                 selected_sups.append(other_sup.strip())
 
             supervisor_string = ", ".join(selected_sups)
+            
+            # Formateamos la lista de offline_reason en un texto (ej. "Coaching, Training")
+            offline_reason_string = ", ".join(offline_reason) if offline_reason else "None"
 
             if not selected_sups:
                 st.error("Please select or enter at least one Supervisor name.")
             elif handover_text.strip() == "":
                 st.error("The Handover / Points to Note field is mandatory.")
             else:
-                # Resta matemática para ausencias reales
                 calculated_absentees = max(0, int(scheduled_reps) - int(actual_reps))
 
                 record_date = str(datetime.date.today())
@@ -282,7 +280,7 @@ with tab1:
                     "Absentees_Number": calculated_absentees,
                     "Absentees_Names": "None",
                     "Offline_Hours": offline_hours,
-                    "Offline_Reason": offline_reason,
+                    "Offline_Reason": offline_reason_string, # Guardamos el string unido aquí
                     "Handover": handover_text,
                     "DateOnly": record_date,
                 }
@@ -327,12 +325,11 @@ with tab2:
 
 # --- TAB 3: TODAY'S HANDOVERS ---
 with tab3:
-    # Header & Button Row
     col_title, col_btn = st.columns([3, 1])
     with col_title:
         st.header("🚨 Today's Shift Handovers")
     with col_btn:
-        st.write("")  # Alignment spacing
+        st.write("") 
         with st.popover("➕ Add an important note", use_container_width=True):
             st.subheader("Add Important Note")
             new_note = st.text_area(
@@ -348,7 +345,6 @@ with tab3:
                 else:
                     st.warning("Note cannot be empty.")
 
-    # --- SECTION: Important Things to Notice ---
     if st.session_state["important_notes"]:
         st.markdown("### 🔔 Important Things to Notice")
         for idx, note in enumerate(st.session_state["important_notes"]):
@@ -361,7 +357,6 @@ with tab3:
                     st.rerun()
         st.divider()
 
-    # --- TODAY'S HANDOVERS LIST ---
     df_today = load_data()
 
     if df_today.empty:
@@ -389,7 +384,6 @@ with tab3:
 
             for index, row in handovers_hoy.iterrows():
                 with st.container(border=True):
-                    # Fila 1: Datos Generales
                     col_h1, col_h2, col_h3, col_h4 = st.columns(4)
                     with col_h1:
                         st.markdown(f"**LOB:** {row.get('LOB', 'N/A')}")
@@ -406,7 +400,6 @@ with tab3:
 
                     st.divider()
 
-                    # Fila 2: Indicadores Rápidos
                     col_m1, col_m2 = st.columns(2)
 
                     with col_m1:
@@ -448,7 +441,6 @@ with tab3:
                             else:
                                 st.markdown("✅ **Tech Issues:** None")
 
-                    # Handover Notes
                     st.markdown("**Handover & Notes:**")
                     handover_val = str(row.get("Handover", "")).strip()
                     st.info(
